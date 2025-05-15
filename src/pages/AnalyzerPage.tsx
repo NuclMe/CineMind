@@ -1,52 +1,114 @@
-import React, { useState } from 'react'
-import axios from 'axios'
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { analyzeReview } from '../api/analyze';
 
 export default function AnalyzerPage() {
-  const [source, setSource] = useState('guardian')
-  const [movieTitle, setMovieTitle] = useState('')
-  const [customReview, setCustomReview] = useState('')
-
-  const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [source, setSource] = useState('guardian');
+  const [movieTitle, setMovieTitle] = useState('');
+  const [customReview, setCustomReview] = useState('');
+  const [userGenres, setUserGenres] = useState([]);
+  const [recommendedMovies, setRecommendedMovies] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('user'); 
-    navigate('/');               
+    localStorage.removeItem('user');
+    navigate('/');
   };
+  const genreMap = {
+    Action: 28,
+    Comedy: 35,
+    Drama: 18,
+    Horror: 27,
+    Romance: 10749,
+    'Sci-Fi': 878,
+    Thriller: 53,
+  };
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    const userId = user?.user_id;
+    if (userId) {
+      axios
+        .get(`http://127.0.0.1:5000/user/${userId}/genres`)
+        .then((response) => {
+          setUserGenres(response.data.genres);
+        })
+        .catch((error) => {
+          console.error('❌ Error fetching user genres:', error);
+        });
+    }
+  }, []);
 
+  useEffect(() => {
+    const fetchRecommendedMovies = async () => {
+      const genreId = genreMap[userGenres[0]]; // возьмём первый любимый жанр
+      if (!genreId) return;
+
+      try {
+        const response = await axios.get(
+          `https://api.themoviedb.org/3/discover/movie`,
+          {
+            params: {
+              api_key: '0406e4b40a3c5eadae900257eab43f8b',
+              with_genres: genreId,
+            },
+          }
+        );
+
+        setRecommendedMovies(response.data.results.slice(0, 5));
+      } catch (error) {
+        console.error('❌ Error fetching recommended movies:', error);
+      }
+    };
+
+    if (userGenres.length > 0) {
+      fetchRecommendedMovies();
+    }
+  }, [userGenres]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setResult(null)
+    e.preventDefault();
+    setLoading(true);
+    setResult(null);
+
+    const user = JSON.parse(localStorage.getItem('user'));
+    console.log('👤 Достаём user из localStorage:', user); // ← добавь этот лог
+    const userId = user?.user_id;
 
     try {
-      const response = await axios.post('http://127.0.0.1:5000/analyze', {
+      const data = await analyzeReview(
         source,
         movieTitle,
         customReview,
-      })
-      setResult(response.data)
+        userId
+        // userGenres
+      );
+      setResult(data);
     } catch (error) {
-      console.error(error)
-      alert('Помилка при обробці запиту')
+      console.error(error);
+      alert('Помилка при обробці запиту');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="bg-white shadow-xl rounded-2xl p-6 w-full max-w-2xl">
-        <h1 className="text-2xl font-bold mb-4 text-center">🎬 Аналізатор фільмових рецензій</h1>
+        <h1 className="text-2xl font-bold mb-4 text-center">
+          🎬 Аналізатор фільмових рецензій
+        </h1>
         <button
-        onClick={handleLogout}
-        className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-      >
-        Вийти 🚪
-      </button>
+          onClick={handleLogout}
+          className="mt-8 py-3 font-semibold rounded-lg
+             bg-black text-white 
+             hover:bg-gradient-to-r hover:from-red-500
+             transition-all duration-500"
+        >
+          Вийти 🚪
+        </button>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="font-medium">Джерело рецензії:</label>
@@ -61,20 +123,7 @@ export default function AnalyzerPage() {
             </select>
           </div>
 
-          {source === 'guardian' && (
-            <div>
-              <label className="font-medium">Назва фільму:</label>
-              <input
-                type="text"
-                value={movieTitle}
-                onChange={(e) => setMovieTitle(e.target.value)}
-                className="mt-1 w-full p-2 border rounded"
-                placeholder="Введіть назву фільму"
-              />
-            </div>
-          )}
-
-          {source === 'tmdb' && (
+          {(source === 'tmdb' || source === 'guardian') && (
             <div>
               <label className="font-medium">Назва фільму:</label>
               <input
@@ -101,7 +150,7 @@ export default function AnalyzerPage() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-green-700 transition-colors duration-300"
             disabled={loading}
           >
             {loading ? 'Обробка...' : 'Аналізувати'}
@@ -111,8 +160,12 @@ export default function AnalyzerPage() {
         {result && (
           <div className="mt-6 space-y-4">
             <div>
-              <h2 className="text-lg font-semibold">📜 Узагальнена рецензія:</h2>
-              <p className="whitespace-pre-line bg-gray-50 p-3 rounded">{result.summary}</p>
+              <h2 className="text-lg font-semibold">
+                📜 Узагальнена рецензія:
+              </h2>
+              <p className="whitespace-pre-line bg-gray-50 p-3 rounded">
+                {result.summary}
+              </p>
             </div>
 
             <div>
@@ -132,7 +185,36 @@ export default function AnalyzerPage() {
             </div>
           </div>
         )}
+        {userGenres.length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-lg font-semibold">🎯 Ваші улюблені жанри:</h2>
+            <ul className="list-disc list-inside bg-gray-50 p-3 rounded">
+              {userGenres.map((genre, idx) => (
+                <li key={idx}>{genre}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {recommendedMovies.length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-lg font-semibold">
+              🎥 Рекомендовані фільми за вашим жанром:
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {recommendedMovies.map((movie) => (
+                <div key={movie.id} className="bg-white shadow rounded p-2">
+                  <img
+                    src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                    alt={movie.title}
+                    className="rounded mb-2"
+                  />
+                  <p className="text-center font-medium">{movie.title}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
-  )
+  );
 }
