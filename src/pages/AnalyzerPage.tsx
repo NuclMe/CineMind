@@ -12,6 +12,7 @@ export default function AnalyzerPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const navigate = useNavigate();
+  const TMDB_KEY = import.meta.env.VITE_TMDB_KEY;
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -51,7 +52,7 @@ export default function AnalyzerPage() {
           `https://api.themoviedb.org/3/discover/movie`,
           {
             params: {
-              api_key: '0406e4b40a3c5eadae900257eab43f8b',
+              api_key: TMDB_KEY,
               with_genres: genreId,
             },
           }
@@ -74,7 +75,7 @@ export default function AnalyzerPage() {
     setResult(null);
 
     const user = JSON.parse(localStorage.getItem('user'));
-    console.log('👤 Достаём user из localStorage:', user); // ← добавь этот лог
+    console.log('👤 Достаём user из localStorage:', user);
     const userId = user?.user_id;
 
     try {
