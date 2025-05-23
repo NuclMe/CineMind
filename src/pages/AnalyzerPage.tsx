@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { analyzeReview } from '../api/analyze';
+import { genreMap } from '../genres';
 
 export default function AnalyzerPage() {
   const [source, setSource] = useState('guardian');
@@ -18,15 +19,7 @@ export default function AnalyzerPage() {
     localStorage.removeItem('user');
     navigate('/');
   };
-  const genreMap = {
-    Action: 28,
-    Comedy: 35,
-    Drama: 18,
-    Horror: 27,
-    Romance: 10749,
-    'Sci-Fi': 878,
-    Thriller: 53,
-  };
+
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     const userId = user?.user_id;
@@ -77,13 +70,15 @@ export default function AnalyzerPage() {
     const user = JSON.parse(localStorage.getItem('user'));
     console.log('👤 Достаём user из localStorage:', user);
     const userId = user?.user_id;
+    const age = user?.age;
 
     try {
       const data = await analyzeReview(
         source,
         movieTitle,
         customReview,
-        userId
+        userId,
+        age
         // userGenres
       );
       setResult(data);

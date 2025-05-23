@@ -1,25 +1,25 @@
-import React from 'react'
-import { Formik } from 'formik'
-import * as Yup from 'yup'
+import React from 'react';
+import { Formik } from 'formik';
+import * as Yup from 'yup';
 import {
   Box,
   Button,
   TextField,
   Typography,
   Container,
-  Paper
-} from '@mui/material'
-import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
+  Paper,
+} from '@mui/material';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 // Схема валідації
 const LoginSchema = Yup.object().shape({
   username: Yup.string().required('Це поле обовʼязкове'),
-  password: Yup.string().required('Це поле обовʼязкове')
-})
+  password: Yup.string().required('Це поле обовʼязкове'),
+});
 
 export default function LoginPage() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   return (
     <Container maxWidth="sm">
@@ -33,19 +33,20 @@ export default function LoginPage() {
           validationSchema={LoginSchema}
           onSubmit={async (values, { setSubmitting, setErrors }) => {
             try {
-              const response = await axios.post('http://127.0.0.1:5000/login', values)
-              console.log('✅ Успішний логін:', response.data)
+              const response = await axios.post(
+                'http://127.0.0.1:5000/login',
+                values
+              );
+              console.log('✅ Успішний логін:', response.data);
 
               // Наприклад, можна зберегти user_id чи токен у localStorage
-              localStorage.setItem('user', JSON.stringify(response.data))
-
-              // Переходимо на AnalyzerPage
-              navigate('/analyzer')
+              localStorage.setItem('user', JSON.stringify(response.data));
+              navigate('/analyzer');
             } catch (error) {
-              console.error('❌ Логін помилка:', error)
-              setErrors({ username: 'Невірний логін або пароль' })
+              console.error('❌ Логін помилка:', error);
+              setErrors({ username: 'Невірний логін або пароль' });
             } finally {
-              setSubmitting(false)
+              setSubmitting(false);
             }
           }}
         >
@@ -56,7 +57,7 @@ export default function LoginPage() {
             handleChange,
             handleBlur,
             handleSubmit,
-            isSubmitting
+            isSubmitting,
           }) => (
             <form onSubmit={handleSubmit}>
               <Box mb={3}>
@@ -102,5 +103,5 @@ export default function LoginPage() {
         </Formik>
       </Paper>
     </Container>
-  )
+  );
 }
