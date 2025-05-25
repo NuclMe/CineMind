@@ -113,9 +113,9 @@ export default function AnalyzerPage() {
               onChange={(e) => setSource(e.target.value)}
               className="mt-1 w-full p-2 border rounded"
             >
-              <option value="guardian">Відгуки критиків</option>
-              <option value="tmdb">Відгуки користувачів</option>
-              <option value="custom">Свій текст</option>
+              <option value="guardian">Відгуки критиків(Guardian)</option>
+              <option value="tmdb">Відгуки користувачів(TMDB)</option>
+              {/* <option value="custom">Свій текст</option> */}
             </select>
           </div>
 
@@ -166,7 +166,8 @@ export default function AnalyzerPage() {
 
             <div>
               <h2 className="text-lg font-semibold">
-                {result.sentiment === 'NEGATIVE' ? '😞' : '😊'} Тональність:
+                {result.sentiment === 'NEGATIVE' ? '😞' : '😊'} Загальне
+                враження критика від фільму:
               </h2>
               <p className="bg-gray-50 p-3 rounded">{result.sentiment}</p>
             </div>
@@ -194,7 +195,7 @@ export default function AnalyzerPage() {
         {recommendedMovies.length > 0 && (
           <div className="mt-6">
             <h2 className="text-lg font-semibold">
-              🎥 Рекомендовані фільми за вашим жанром:
+              🎥 Рекомендовані фільми за вашим вподобаннями:
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {recommendedMovies.map((movie) => (

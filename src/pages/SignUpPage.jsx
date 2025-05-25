@@ -1,6 +1,6 @@
-import React from 'react'
-import { Formik } from 'formik'
-import * as Yup from 'yup'
+import React from 'react';
+import { Formik } from 'formik';
+import * as Yup from 'yup';
 import {
   Box,
   Button,
@@ -14,10 +14,10 @@ import {
   FormControl,
   Checkbox,
   ListItemText,
-  OutlinedInput
-} from '@mui/material'
-import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
+  OutlinedInput,
+} from '@mui/material';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 // Схема валідації
 const SignUpSchema = Yup.object().shape({
@@ -25,13 +25,21 @@ const SignUpSchema = Yup.object().shape({
   password: Yup.string().required('Це поле обовʼязкове'),
   gender: Yup.string().required('Це поле обовʼязкове'),
   age: Yup.number().required('Це поле обовʼязкове').min(0, 'Некоректний вік'),
-  genres: Yup.array().min(1, 'Обери хоча б один жанр')
-})
+  genres: Yup.array().min(1, 'Обери хоча б один жанр'),
+});
 
-const allGenres = ['Action', 'Comedy', 'Drama', 'Horror', 'Romance', 'Sci-Fi', 'Thriller']
+const allGenres = [
+  'Action',
+  'Comedy',
+  'Drama',
+  'Horror',
+  'Romance',
+  'Sci-Fi',
+  'Thriller',
+];
 
 export default function SignUpPage() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   return (
     <Container maxWidth="sm">
@@ -41,22 +49,35 @@ export default function SignUpPage() {
         </Typography>
 
         <Formik
-          initialValues={{ username: '', password: '', gender: '', age: '', genres: [] }}
+          initialValues={{
+            username: '',
+            password: '',
+            gender: '',
+            age: '',
+            genres: [],
+            language: 'en',
+          }}
           validationSchema={SignUpSchema}
           onSubmit={async (values, { setSubmitting, setErrors }) => {
             try {
-              const response = await axios.post('http://127.0.0.1:5000/signup', values);
+              const response = await axios.post(
+                'http://127.0.0.1:5000/signup',
+                values
+              );
               console.log('✅ Успішна реєстрація:', response.data);
-          
+
               // Якщо бекенд повертає токен одразу після signup:
               const token = response.data.token;
               localStorage.setItem('token', token); // або context, якщо є
-          
+
               // Перенаправляємо на AnalyzerPage
               navigate('/analyzer');
             } catch (error) {
               console.error('❌ Помилка при реєстрації:', error);
-              setErrors({ username: 'Помилка при реєстрації (можливо, користувач вже існує)' });
+              setErrors({
+                username:
+                  'Помилка при реєстрації (можливо, користувач вже існує)',
+              });
             } finally {
               setSubmitting(false);
             }
@@ -69,7 +90,7 @@ export default function SignUpPage() {
             handleChange,
             handleBlur,
             handleSubmit,
-            isSubmitting
+            isSubmitting,
           }) => (
             <form onSubmit={handleSubmit}>
               <Box mb={3}>
@@ -124,7 +145,26 @@ export default function SignUpPage() {
                   )}
                 </FormControl>
               </Box>
-
+              <Box mb={3}>
+                <FormControl fullWidth>
+                  <InputLabel id="language-label">Мова інтерфейсу</InputLabel>
+                  <Select
+                    labelId="language-label"
+                    id="language"
+                    name="language"
+                    value={values.language}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    label="Мова інтерфейсу"
+                  >
+                    <MenuItem value="en">English</MenuItem>
+                    <MenuItem value="uk">Українська</MenuItem>
+                    <MenuItem value="es">Español</MenuItem>
+                    <MenuItem value="de">Deutsch</MenuItem>
+                    <MenuItem value="fr">Français</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
               <Box mb={3}>
                 <TextField
                   fullWidth
@@ -182,5 +222,5 @@ export default function SignUpPage() {
         </Formik>
       </Paper>
     </Container>
-  )
+  );
 }
