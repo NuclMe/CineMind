@@ -51,7 +51,7 @@ export default function AnalyzerPage() {
           }
         );
 
-        setRecommendedMovies(response.data.results.slice(0, 5));
+        setRecommendedMovies(response.data.results.slice(0, 9));
       } catch (error) {
         console.error('❌ Error fetching recommended movies:', error);
       }
@@ -68,7 +68,6 @@ export default function AnalyzerPage() {
     setResult(null);
 
     const user = JSON.parse(localStorage.getItem('user'));
-    console.log('👤 Достаём user из localStorage:', user);
     const userId = user?.user_id;
     const age = user?.age;
 
@@ -79,9 +78,15 @@ export default function AnalyzerPage() {
         customReview,
         userId,
         age
-        // userGenres
       );
       setResult(data);
+
+      // 🔁 Оновлення жанрів після аналізу
+      await axios
+        .get(`http://127.0.0.1:5000/user/${userId}/genres`)
+        .then((response) => {
+          setUserGenres(response.data.genres);
+        });
     } catch (error) {
       console.error(error);
       alert('Помилка при обробці запиту');
@@ -166,8 +171,8 @@ export default function AnalyzerPage() {
 
             <div>
               <h2 className="text-lg font-semibold">
-                {result.sentiment === 'NEGATIVE' ? '😞' : '😊'} Загальне
-                враження критика від фільму:
+                {result.sentiment === 'NEGATIVE' ? '😞' : '😊'} Загальна
+                тональність відгука по цьому фільму:
               </h2>
               <p className="bg-gray-50 p-3 rounded">{result.sentiment}</p>
             </div>
