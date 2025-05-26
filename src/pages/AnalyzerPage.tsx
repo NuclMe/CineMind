@@ -3,6 +3,9 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { analyzeReview } from '../api/analyze';
 import { genreMap } from '../genres';
+import { useTranslation } from 'react-i18next';
+import { User } from 'lucide-react';
+import logo from '../assets/logo.png';
 
 export default function AnalyzerPage() {
   const [source, setSource] = useState('guardian');
@@ -12,16 +15,23 @@ export default function AnalyzerPage() {
   const [recommendedMovies, setRecommendedMovies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [language, setLanguage] = useState(
+    localStorage.getItem('language') || 'en'
+  );
+
+  const { t, i18n } = useTranslation();
+
   const navigate = useNavigate();
+
   const TMDB_KEY = import.meta.env.VITE_TMDB_KEY;
 
   const handleLogout = () => {
     localStorage.removeItem('user');
     navigate('/');
   };
+  const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
     const userId = user?.user_id;
     if (userId) {
       axios
@@ -37,7 +47,7 @@ export default function AnalyzerPage() {
 
   useEffect(() => {
     const fetchRecommendedMovies = async () => {
-      const genreId = genreMap[userGenres[0]]; // возьмём первый любимый жанр
+      const genreId = genreMap[userGenres[0]];
       if (!genreId) return;
 
       try {
@@ -77,11 +87,11 @@ export default function AnalyzerPage() {
         movieTitle,
         customReview,
         userId,
-        age
+        age,
+        language
       );
       setResult(data);
 
-      // 🔁 Оновлення жанрів після аналізу
       await axios
         .get(`http://127.0.0.1:5000/user/${userId}/genres`)
         .then((response) => {
@@ -89,134 +99,169 @@ export default function AnalyzerPage() {
         });
     } catch (error) {
       console.error(error);
-      alert('Помилка при обробці запиту');
+      alert(t('error.processing'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white shadow-xl rounded-2xl p-6 w-full max-w-2xl">
-        <h1 className="text-2xl font-bold mb-4 text-center">
-          🎬 Аналізатор фільмових рецензій
-        </h1>
-        <button
-          onClick={handleLogout}
-          className="mt-8 py-3 font-semibold rounded-lg
-             bg-black text-white 
-             hover:bg-gradient-to-r hover:from-red-500
-             transition-all duration-500"
-        >
-          Вийти 🚪
-        </button>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="font-medium">Джерело рецензії:</label>
-            <select
-              value={source}
-              onChange={(e) => setSource(e.target.value)}
-              className="mt-1 w-full p-2 border rounded"
-            >
-              <option value="guardian">Відгуки критиків(Guardian)</option>
-              <option value="tmdb">Відгуки користувачів(TMDB)</option>
-              {/* <option value="custom">Свій текст</option> */}
-            </select>
+    <div className="min-h-screen bg-gray-100">
+      <header className="bg-white shadow px-6 py-4 flex justify-between items-center">
+        <div className="text-xl font-bold flex items-center justify-center">
+          <img
+            src={logo}
+            alt="CineMind Logo"
+            className="w-20 bg-[wheat] rounded-full p-2 mr-[10px]"
+          />
+          CineMind
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-gray-700">
+            <User />
+            <span>
+              {user?.username}, {user?.age} {t('age')}
+            </span>
           </div>
-
-          {(source === 'tmdb' || source === 'guardian') && (
-            <div>
-              <label className="font-medium">Назва фільму:</label>
-              <input
-                type="text"
-                value={movieTitle}
-                onChange={(e) => setMovieTitle(e.target.value)}
-                className="mt-1 w-full p-2 border rounded"
-                placeholder="Введіть назву фільму"
-              />
-            </div>
-          )}
-
-          {source === 'custom' && (
-            <div>
-              <label className="font-medium">Текст рецензії:</label>
-              <textarea
-                value={customReview}
-                onChange={(e) => setCustomReview(e.target.value)}
-                className="mt-1 w-full p-2 border rounded h-40"
-                placeholder="Введіть свій текст"
-              ></textarea>
-            </div>
-          )}
-
           <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-green-700 transition-colors duration-300"
-            disabled={loading}
+            onClick={handleLogout}
+            className="py-2 px-4 font-semibold rounded bg-black text-white hover:bg-gradient-to-r hover:from-red-500 transition-all duration-500"
           >
-            {loading ? 'Обробка...' : 'Аналізувати'}
+            {t('logout')} 🚪
           </button>
-        </form>
+        </div>
+      </header>
+      <main className="flex justify-center p-4">
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+          <div className="bg-white shadow-xl rounded-2xl p-6 w-full max-w-2xl">
+            <h1 className="text-2xl font-bold mb-4 text-center">
+              {t('title')}
+            </h1>
 
-        {result && (
-          <div className="mt-6 space-y-4">
-            <div>
-              <h2 className="text-lg font-semibold">
-                📜 Узагальнена рецензія:
-              </h2>
-              <p className="whitespace-pre-line bg-gray-50 p-3 rounded">
-                {result.summary}
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-lg font-semibold">
-                {result.sentiment === 'NEGATIVE' ? '😞' : '😊'} Загальна
-                тональність відгука по цьому фільму:
-              </h2>
-              <p className="bg-gray-50 p-3 rounded">{result.sentiment}</p>
-            </div>
-
-            <div>
-              <h2 className="text-lg font-semibold">🔑 Ключові теми:</h2>
-              <ul className="list-disc list-inside bg-gray-50 p-3 rounded">
-                {result.keywords.map((kw: string, idx: number) => (
-                  <li key={idx}>{kw}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-        {userGenres.length > 0 && (
-          <div className="mt-6">
-            <h2 className="text-lg font-semibold">🎯 Ваші улюблені жанри:</h2>
-            <ul className="list-disc list-inside bg-gray-50 p-3 rounded">
-              {userGenres.map((genre, idx) => (
-                <li key={idx}>{genre}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {recommendedMovies.length > 0 && (
-          <div className="mt-6">
-            <h2 className="text-lg font-semibold">
-              🎥 Рекомендовані фільми за вашим вподобаннями:
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {recommendedMovies.map((movie) => (
-                <div key={movie.id} className="bg-white shadow rounded p-2">
-                  <img
-                    src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-                    alt={movie.title}
-                    className="rounded mb-2"
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="font-medium">{t('reviewSource')}:</label>
+                <select
+                  value={source}
+                  onChange={(e) => setSource(e.target.value)}
+                  className="mt-1 w-full p-2 border rounded"
+                >
+                  <option value="guardian">{t('source.guardian')}</option>
+                  <option value="tmdb">{t('source.tmdb')}</option>
+                </select>
+              </div>
+              <div>
+                <label className="font-medium">{t('language')}:</label>
+                <select
+                  value={language}
+                  onChange={(e) => {
+                    const lang = e.target.value;
+                    setLanguage(lang);
+                    localStorage.setItem('language', lang);
+                    i18n.changeLanguage(lang);
+                  }}
+                  className="mt-1 w-full p-2 border rounded"
+                >
+                  <option value="en">English</option>
+                  <option value="de">Deutsch</option>
+                  <option value="es">Español</option>
+                  <option value="uk">Українська</option>
+                  <option value="fr">Français</option>
+                </select>
+              </div>
+              {(source === 'tmdb' || source === 'guardian') && (
+                <div>
+                  <label className="font-medium">{t('movieTitle')}:</label>
+                  <input
+                    type="text"
+                    value={movieTitle}
+                    onChange={(e) => setMovieTitle(e.target.value)}
+                    className="mt-1 w-full p-2 border rounded"
+                    placeholder={t('movieTitlePlaceholder')}
                   />
-                  <p className="text-center font-medium">{movie.title}</p>
                 </div>
-              ))}
-            </div>
+              )}
+
+              {source === 'custom' && (
+                <div>
+                  <label className="font-medium">{t('customReview')}:</label>
+                  <textarea
+                    value={customReview}
+                    onChange={(e) => setCustomReview(e.target.value)}
+                    className="mt-1 w-full p-2 border rounded h-40"
+                    placeholder={t('customReviewPlaceholder')}
+                  ></textarea>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-2 rounded hover:bg-green-700 transition-colors duration-300"
+                disabled={loading}
+              >
+                {loading ? t('loading') : t('analyze')}
+              </button>
+            </form>
+
+            {result && (
+              <div className="mt-6 space-y-4">
+                <div>
+                  <h2 className="text-lg font-semibold">📜 {t('summary')}:</h2>
+                  <p className="whitespace-pre-line bg-gray-50 p-3 rounded">
+                    {result.summary}
+                  </p>
+                </div>
+
+                <div>
+                  <h2 className="text-lg font-semibold">
+                    {result.sentiment === 'NEGATIVE' ? '😞' : '😊'}{' '}
+                    {t('sentiment')}:
+                  </h2>
+                  <p className="bg-gray-50 p-3 rounded">{result.sentiment}</p>
+                </div>
+
+                <div>
+                  <h2 className="text-lg font-semibold">🔑 {t('keywords')}:</h2>
+                  <ul className="list-disc list-inside bg-gray-50 p-3 rounded">
+                    {result.keywords.map((kw: string, idx: number) => (
+                      <li key={idx}>{kw}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+            {userGenres.length > 0 && (
+              <div className="mt-6">
+                <h2 className="text-lg font-semibold">🎯 {t('genres')}:</h2>
+                <ul className="list-disc list-inside bg-gray-50 p-3 rounded">
+                  {userGenres.map((genre, idx) => (
+                    <li key={idx}>{genre}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {recommendedMovies.length > 0 && (
+              <div className="mt-6">
+                <h2 className="text-lg font-semibold">
+                  🎥 {t('recommendations')}:
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {recommendedMovies.map((movie) => (
+                    <div key={movie.id} className="bg-white shadow rounded p-2">
+                      <img
+                        src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                        alt={movie.title}
+                        className="rounded mb-2"
+                      />
+                      <p className="text-center font-medium">{movie.title}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

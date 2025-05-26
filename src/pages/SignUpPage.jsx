@@ -25,7 +25,7 @@ const SignUpSchema = Yup.object().shape({
   password: Yup.string().required('Це поле обовʼязкове'),
   gender: Yup.string().required('Це поле обовʼязкове'),
   age: Yup.number().required('Це поле обовʼязкове').min(0, 'Некоректний вік'),
-  genres: Yup.array().min(1, 'Обери хоча б один жанр'),
+  // genres: Yup.array().min(1, 'Обери хоча б один жанр'),
 });
 
 const allGenres = [
@@ -66,9 +66,14 @@ export default function SignUpPage() {
               );
               console.log('✅ Успішна реєстрація:', response.data);
 
-              // Якщо бекенд повертає токен одразу після signup:
-              const token = response.data.token;
-              localStorage.setItem('token', token); // або context, якщо є
+              const user = {
+                user_id: response.data.user_id || response.data.id || 1, // залежно від структури відповіді
+                username: values.username,
+                age: values.age,
+                gender: values.gender,
+                genres: values.genres || [], // або []
+              };
+              localStorage.setItem('user', JSON.stringify(user));
 
               // Перенаправляємо на AnalyzerPage
               navigate('/analyzer');
