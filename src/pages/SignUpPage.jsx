@@ -152,7 +152,7 @@ export default function SignUpPage() {
               </Box>
               <Box mb={3}>
                 <FormControl fullWidth>
-                  <InputLabel id="language-label">Мова інтерфейсу</InputLabel>
+                  <InputLabel id="language-label">Мова рецензії</InputLabel>
                   <Select
                     labelId="language-label"
                     id="language"
