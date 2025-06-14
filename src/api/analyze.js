@@ -5,7 +5,8 @@ export async function analyzeReview(
   movieTitle,
   customReview,
   userId,
-  age
+  age,
+  language
 ) {
   try {
     const response = await axios.post('http://127.0.0.1:5000/analyze', {
@@ -14,6 +15,7 @@ export async function analyzeReview(
       customReview,
       userId,
       age,
+      language,
     });
     return response.data;
   } catch (error) {

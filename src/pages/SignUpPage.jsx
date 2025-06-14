@@ -71,7 +71,8 @@ export default function SignUpPage() {
                 username: values.username,
                 age: values.age,
                 gender: values.gender,
-                genres: values.genres || [], // або []
+                genres: values.genres || [],
+                language: values.language,
               };
               localStorage.setItem('user', JSON.stringify(user));
 
