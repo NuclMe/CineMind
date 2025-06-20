@@ -29,8 +29,10 @@ const SignUpSchema = Yup.object().shape({
 });
 
 const allGenres = [
-  'Action',
   'Comedy',
+  'Family',
+  'Adventure',
+  'Action',
   'Drama',
   'Horror',
   'Romance',

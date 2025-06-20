@@ -32,12 +32,22 @@ export default function AnalyzerPage() {
   const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
-    const userId = user?.user_id;
-    if (userId) {
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    const localGenres = storedUser?.genres;
+    const userId = storedUser?.user_id;
+
+    if (localGenres?.length) {
+      setUserGenres(localGenres);
+    } else if (userId) {
       axios
         .get(`http://127.0.0.1:5000/user/${userId}/genres`)
         .then((response) => {
-          setUserGenres(response.data.genres);
+          const genresFromServer = response.data.genres;
+          setUserGenres(genresFromServer);
+
+          // 🔄 Зберігаємо в localStorage
+          const updatedUser = { ...storedUser, genres: genresFromServer };
+          localStorage.setItem('user', JSON.stringify(updatedUser));
         })
         .catch((error) => {
           console.error('❌ Error fetching user genres:', error);
@@ -91,12 +101,18 @@ export default function AnalyzerPage() {
         language
       );
       setResult(data);
-      console.log(data);
-      await axios
-        .get(`http://127.0.0.1:5000/user/${userId}/genres`)
-        .then((response) => {
-          setUserGenres(response.data.genres);
-        });
+
+      // 💡 Оновлюємо жанри з бекенда після аналізу
+      const genreResponse = await axios.get(
+        `http://127.0.0.1:5000/user/${userId}/genres`
+      );
+      const updatedGenres = genreResponse.data.genres;
+
+      setUserGenres(updatedGenres);
+
+      // 💾 Синхронізуємо з localStorage
+      const updatedUser = { ...user, genres: updatedGenres };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
     } catch (error) {
       console.error(error);
       alert(t('error.processing'));
@@ -140,17 +156,6 @@ export default function AnalyzerPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="font-medium">{t('reviewSource')}:</label>
-                <select
-                  value={source}
-                  onChange={(e) => setSource(e.target.value)}
-                  className="mt-1 w-full p-2 border rounded"
-                >
-                  <option value="guardian">{t('source.guardian')}</option>
-                  <option value="tmdb">{t('source.tmdb')}</option>
-                </select>
-              </div>
-              <div>
                 <label className="font-medium">{t('language')}:</label>
                 <select
                   value={language}
@@ -162,13 +167,25 @@ export default function AnalyzerPage() {
                   }}
                   className="mt-1 w-full p-2 border rounded"
                 >
+                  <option value="uk">Українська</option>
                   <option value="en">English</option>
                   <option value="de">Deutsch</option>
                   <option value="es">Español</option>
-                  <option value="uk">Українська</option>
                   <option value="fr">Français</option>
                 </select>
               </div>
+              <div>
+                <label className="font-medium">{t('reviewSource')}:</label>
+                <select
+                  value={source}
+                  onChange={(e) => setSource(e.target.value)}
+                  className="mt-1 w-full p-2 border rounded"
+                >
+                  <option value="guardian">{t('source.guardian')}</option>
+                  <option value="tmdb">{t('source.tmdb')}</option>
+                </select>
+              </div>
+
               {(source === 'tmdb' || source === 'guardian') && (
                 <div>
                   <label className="font-medium">{t('movieTitle')}:</label>
@@ -210,6 +227,27 @@ export default function AnalyzerPage() {
                   <p className="whitespace-pre-line bg-gray-50 p-3 rounded">
                     {result.summary}
                   </p>
+                </div>
+                <div className="mt-6 space-y-4">
+                  <div>
+                    <h2 className="text-lg font-semibold">
+                      📜 {t('critics_source')}:
+                    </h2>
+                    <div className="bg-gray-50 p-3 rounded space-y-2">
+                      <a
+                        href="https://www.theguardian.com/film/2015/jun/25/the-terminator-review-return-of-the-classic-80s-action-behemoth"
+                        className="block text-blue-600 hover:underline"
+                      >
+                        Guardian
+                      </a>
+                      <a
+                        href="https://filmschoolrejects.com/terminator-1984-what-critics-thought/"
+                        className="block text-blue-600 hover:underline"
+                      >
+                        filmschoolrejects
+                      </a>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
